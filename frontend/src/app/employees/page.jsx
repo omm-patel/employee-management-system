@@ -1,19 +1,50 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import Link from "next/link";
 import { toast } from "sonner";
+import { Upload, Download } from "lucide-react";
+
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+
+import {
+    Users,
+    IndianRupee,
+    Building2,
+    Search,
+    Plus,
+    ArrowUpDown,
+    Pencil,
+    Trash2,
+} from "lucide-react";
+
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+
+
 
 
 export default function EmployeesPage() {
@@ -26,6 +57,10 @@ export default function EmployeesPage() {
     const [sortBy, setSortBy] = useState("");
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [employeeToDelete, setEmployeeToDelete] = useState(null);
+    const [excelFile, setExcelFile] = useState(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = useRef(null);
+    const [isExporting, setIsExporting] = useState(false);
 
     // Fetch employees data from API
     const fetchEmployees = async () => {
@@ -39,6 +74,67 @@ export default function EmployeesPage() {
             console.log(error);
         }
     };
+
+    // Upload Excel File
+    const handleExcelUpload = async () => {
+        if (!excelFile) {
+            toast.error("Please select an Excel file");
+            return;
+        }
+
+        try {
+
+            setIsUploading(true);
+
+            const formData = new FormData();
+
+            formData.append("file", excelFile);
+
+            const res = await axios.post(
+                "http://localhost:5000/employees/import",
+                formData,
+                {
+                    headers: {
+                        "Content-Type": "multipart/form-data",
+                    },
+                }
+            );
+
+            toast.success(
+                `${res.data.inserted} employees imported, ${res.data.skipped} skipped`
+            );
+
+            fetchEmployees();
+
+            setExcelFile(null);
+
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+        } catch (error) {
+            console.log(error);
+
+            toast.error(
+                error.response?.data?.message ||
+                "Failed to import employees"
+            );
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    // Export Excel File
+    const handleExport = () => {
+    setIsExporting(true);
+
+    window.location.href =
+        "http://localhost:5000/employees/export";
+
+    setTimeout(() => {
+        setIsExporting(false);
+    }, 2000);
+};
+
     // Fetch data on component mount
     useEffect(() => {
         const loadEmployees = async () => {
@@ -133,7 +229,7 @@ export default function EmployeesPage() {
             lastIndex
         );
 
-    
+
     // Total pages
     const totalPages = Math.ceil(
         filteredEmployees.length /
@@ -141,154 +237,262 @@ export default function EmployeesPage() {
     );
 
     return (
-        <div className="max-w-6xl mx-auto p-6">
-            <h1 className="text-3xl font-bold mb-6">
-                Employee Management System
-            </h1>
+        <div className="max-w-7xl mx-auto px-6 py-8">
+            <div className="mb-10">
+                <h1 className="text-4xl font-bold tracking-tight">
+                    Employee Management System
+                </h1>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="border rounded-lg p-4 shadow">
-                    <h3 className="text-gray-500">Total Employees</h3>
-                    <p className="text-3xl font-bold">
-                        {totalEmployees}
-                    </p>
-                </div>
-
-                <div className="border rounded-lg p-4 shadow">
-                    <h3 className="text-gray-500">Total Salary</h3>
-                    <p className="text-3xl font-bold">
-                        ₹{totalSalary.toLocaleString()}
-                    </p>
-                </div>
-
-                <div className="border rounded-lg p-4 shadow">
-                    <h3 className="text-gray-500">Departments</h3>
-                    <p className="text-3xl font-bold">
-                        {totalDepartments}
-                    </p>
-                </div>
+                <p className="text-gray-500 mt-2">
+                    Manage employee records, departments and salaries.
+                </p>
             </div>
 
-            <div className="flex items-center justify-between gap-4 mb-4">
-                <input
-                    type="text"
-                    placeholder="Search employee..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="border p-2 rounded w-full"
-                />
+            {/* Dashboard Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <CardTitle className="text-sm text-gray-500">
+                            Total Employees
+                        </CardTitle>
 
-                <Link
-                    href="/employees/add"
-                    className="bg-black text-white px-4 py-2 rounded-md  whitespace-nowrap"
-                >
-                    Add Employee
-                </Link>
+                        <Users className="h-5 w-5 text-blue-500" />
+                    </CardHeader>
+
+                    <CardContent>
+                        <p className="text-4xl font-bold">
+                            {totalEmployees}
+                        </p>
+                    </CardContent>
+                </Card>
+
+                <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <CardTitle className="text-sm text-gray-500">
+                            Total Salary
+                        </CardTitle>
+
+                        <IndianRupee className="h-5 w-5 text-green-500" />
+                    </CardHeader>
+
+                    <CardContent>
+                        <p className="text-4xl font-bold">
+                            ₹{totalSalary.toLocaleString()}
+                        </p>
+                    </CardContent>
+                </Card>
+
+                <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <CardTitle className="text-sm text-gray-500">
+                            Departments
+                        </CardTitle>
+
+                        <Building2 className="h-5 w-5 text-orange-500" />
+                    </CardHeader>
+
+                    <CardContent>
+                        <p className="text-4xl font-bold">
+                            {totalDepartments}
+                        </p>
+                    </CardContent>
+                </Card>
             </div>
+            <Card>
+                <CardContent className="p-6">
+                    <div className="flex flex-col md:flex-row gap-4 justify-between items-center mb-6">
+                        <div className="relative w-full">
+                            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
 
-            <div className="flex gap-2 mb-4">
-                <button
-                    onClick={() => setSortBy("name")}
-                    className="border px-3 py-2 rounded"
-                >
-                    Sort Name
-                </button>
+                            <input
+                                type="text"
+                                placeholder="Search employees..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full border rounded-lg pl-10 pr-4 py-2"
+                            />
+                        </div>
 
-                <button
-                    onClick={() => setSortBy("salary")}
-                    className="border px-3 py-2 rounded"
-                >
-                    Sort Salary
-                </button>
-            </div>
-
-            {/* If No Employees Found then show this */}
-            {filteredEmployees.length === 0 && (
-                <div className="text-center py-10">
-                    No employees found
-                </div>
-            )}
-            <table className="w-full border">
-                <thead>
-                    <tr>
-                        <th className="border p-3">#</th>
-                        <th className="border p-3">ID</th>
-                        <th className="border p-3">Name</th>
-                        <th className="border p-3">Email</th>
-                        <th className="border p-3">Department</th>
-                        <th className="border p-3">Salary</th>
-                        <th className="border p-3">Actions</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    {currentEmployees.map((employee, index) => (
-                        <tr key={employee.id}>
-                            <td className="border p-3">
-                                {index + 1}
-                            </td>
-
-                            <td className="border p-3">
-                                {employee.id}
-                            </td>
-
-                            <td className="border p-3">
-                                {employee.name}
-                            </td>
-
-                            <td className="border p-3">
-                                {employee.email}
-                            </td>
-
-                            <td className="border p-3">
-                                {employee.department}
-                            </td>
-
-                            <td className="border p-3">
-                                ₹{employee.salary}
-                            </td>
-                            {/* Add Edit button */}
-                            <td className="border p-3">
-                                <Link
-                                    href={`/employees/edit/${employee.id}`}
-                                    className="bg-blue-500 text-white px-3 py-1 rounded mr-2"
-                                >
-                                    Edit
-                                </Link>
-                                {/* Add Delete button */}
-                                <button
-                                    onClick={() => {
-                                        setEmployeeToDelete(employee.id);
-                                        setIsDeleteOpen(true);
-                                    }}
-                                    className="bg-red-500 text-white px-3 py-1 rounded"
-                                >
-                                    Delete
-                                </button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-            <div className="flex justify-center gap-2 mt-4">
-                {Array.from(
-                    { length: totalPages },
-                    (_, index) => (
-                        <button
-                            key={index}
-                            onClick={() =>
-                                setCurrentPage(index + 1)
-                            }
-                            className={`px-3 py-2 border rounded ${currentPage === index + 1
-                                    ? "bg-blue-500 text-white"
-                                    : ""
-                                }`}
+                        <a
+                            href="http://localhost:5000/employees/download-template"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 border px-4 py-2 rounded-lg hover:bg-gray-100 whitespace-nowrap"
                         >
-                            {index + 1}
+                            <Download size={18} />
+                            Template
+                        </a>
+
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept=".xlsx,.csv"
+                            className="hidden"
+                            id="excelFile"
+                            onChange={(e) =>
+                                setExcelFile(e.target.files[0])
+                            }
+                        />
+
+                        <label
+                            htmlFor="excelFile"
+                            className="cursor-pointer border px-4 py-2 rounded-lg"
+                        >
+                            Select Excel
+                        </label>
+
+                        <button
+                            onClick={handleExcelUpload}
+                            disabled={isUploading}
+                            className="bg-green-600 text-white px-4 py-2 rounded-lg disabled:opacity-50"
+                        >
+                            <Upload size={18} />
+                            {isUploading ? "Uploading..." : "Upload Excel"}
                         </button>
-                    )
-                )}
-            </div>
+
+                        {excelFile && (
+                            <p className="text-sm text-green-600 mt-2">
+                                Selected: {excelFile.name}
+                            </p>
+                        )}
+
+                        <Link
+                            href="/employees/add"
+                            className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg whitespace-nowrap hover:opacity-90"
+                        >
+                            <Plus size={18} />
+                            Add Employee
+                        </Link>
+
+                        <button
+                            onClick={handleExport}
+                            disabled={isExporting}
+                            className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg disabled:opacity-50"
+                        >
+                            <Download size={18} />
+                            {isExporting
+                                ? "Exporting..."
+                                : "Export Employees"}
+                        </button>
+                    </div>
+
+                    <div className="flex gap-3 mb-6">
+                        <button
+                            onClick={() => setSortBy("name")}
+                            className="flex items-center gap-2 border px-4 py-2 rounded-lg hover:bg-gray-100"
+                        >
+                            <ArrowUpDown size={16} />
+                            Sort Name
+                        </button>
+
+                        <button
+                            onClick={() => setSortBy("salary")}
+                            className="flex items-center gap-2 border px-4 py-2 rounded-lg hover:bg-gray-100"
+                        >
+                            <ArrowUpDown size={16} />
+                            Sort Salary
+                        </button>
+                    </div>
+
+                    {/* If No Employees Found then show this */}
+                    {filteredEmployees.length === 0 && (
+                        <div className="text-center py-10">
+                            No employees found
+                        </div>
+                    )}
+                    <table className="w-full border">
+                        <thead className="bg-slate-50">
+                            <tr>
+                                <th className="border p-3">#</th>
+                                <th className="border p-3">ID</th>
+                                <th className="border p-3">Name</th>
+                                <th className="border p-3">Email</th>
+                                <th className="border p-3">Phone</th>
+                                <th className="border p-3">Department</th>
+                                <th className="border p-3">Salary</th>
+                                <th className="border p-3">Actions</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {currentEmployees.map((employee, index) => (
+                                <tr
+                                    key={employee.id}
+                                    className="hover:bg-gray-50 transition"
+                                >
+                                    <td className="border p-3">
+                                        {index + 1}
+                                    </td>
+
+                                    <td className="border p-3">
+                                        {employee.id}
+                                    </td>
+
+                                    <td className="border p-3">
+                                        {employee.name}
+                                    </td>
+
+                                    <td className="border p-3">
+                                        {employee.email}
+                                    </td>
+
+                                    <td className="border p-3">
+                                        {employee.phone}
+                                    </td>
+
+                                    <td className="border p-3">
+                                        {employee.department}
+                                    </td>
+
+                                    <td className="border p-3">
+                                        ₹{employee.salary}
+                                    </td>
+                                    {/* Add Edit button */}
+                                    <td className="border p-3">
+                                        <Link
+                                            href={`/employees/edit/${employee.id}`}
+                                            className="inline-flex items-center gap-2 border px-3 py-2 rounded-lg hover:bg-gray-100 mr-2"
+                                        >
+                                            <Pencil size={16} />
+                                            Edit
+                                        </Link>
+                                        {/* Add Delete button */}
+                                        <button
+                                            onClick={() => {
+                                                setEmployeeToDelete(employee.id);
+                                                setIsDeleteOpen(true);
+                                            }}
+                                            className="inline-flex items-center gap-2 border border-red-200 text-red-600 px-3 py-2 rounded-lg hover:bg-red-50"
+                                        >
+                                            <Trash2 size={16} />
+                                            Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    <div className="flex justify-center gap-2 mt-4">
+                        {Array.from(
+                            { length: totalPages },
+                            (_, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() =>
+                                        setCurrentPage(index + 1)
+                                    }
+                                    className={`px-3 py-2 border rounded ${currentPage === index + 1
+                                        ? "bg-blue-500 text-white"
+                                        : ""
+                                        }`}
+                                >
+                                    {index + 1}
+                                </button>
+                            )
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
             <AlertDialog
                 open={isDeleteOpen}
                 onOpenChange={setIsDeleteOpen}

@@ -128,3 +128,103 @@
     @apply font-sans;
   }
 }
+
+@layer components {
+  /* Dashboard Layout */
+  .dashboard-page {
+    @apply min-h-screen bg-slate-50;
+  }
+
+  .dashboard-container {
+    @apply max-w-7xl mx-auto px-6 py-8;
+  }
+
+  /* Cards */
+  .dashboard-card {
+    @apply bg-white rounded-2xl border border-slate-100 shadow-sm;
+  }
+
+  .dashboard-card-hover {
+    @apply bg-white rounded-2xl border border-slate-100 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5;
+  }
+
+  /* Typography */
+  .dashboard-title {
+    @apply text-3xl font-bold tracking-tight text-slate-900;
+  }
+
+  .dashboard-subtitle {
+    @apply mt-2 text-slate-500;
+  }
+
+  .dashboard-section-title {
+    @apply text-lg font-semibold text-slate-900;
+  }
+
+  .dashboard-label {
+    @apply text-sm font-medium text-slate-700;
+  }
+
+  /* Form Controls */
+  .dashboard-input {
+    @apply h-11 rounded-xl;
+  }
+
+  .dashboard-select {
+    @apply h-11 rounded-xl;
+  }
+
+  /* Buttons */
+  .dashboard-primary-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-700;
+  }
+
+  .dashboard-secondary-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50;
+  }
+
+  .dashboard-danger-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-red-700;
+  }
+
+  /* Stats Cards */
+  .stat-card {
+    @apply bg-white rounded-2xl border border-slate-100 shadow-sm p-6;
+  }
+
+  /* Tables */
+  .table-wrapper {
+    @apply bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden;
+  }
+
+  .table-header {
+    @apply bg-slate-50 text-slate-500 uppercase tracking-wide text-xs font-semibold;
+  }
+
+  .table-row {
+    @apply hover:bg-slate-50 transition-colors;
+  }
+
+  /* Badge */
+  .badge-indigo {
+    @apply bg-indigo-50 text-indigo-700 border border-indigo-100;
+  }
+
+  .badge-emerald {
+    @apply bg-emerald-50 text-emerald-700 border border-emerald-100;
+  }
+
+  .badge-orange {
+    @apply bg-orange-50 text-orange-700 border border-orange-100;
+  }
+
+  /* Empty State */
+  .empty-state {
+    @apply flex flex-col items-center justify-center py-20 text-center;
+  }
+
+  /* Loading */
+  .skeleton {
+    @apply animate-pulse bg-slate-200 rounded;
+  }
+}

@@ -4,524 +4,506 @@ import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Upload, Download } from "lucide-react";
-
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
-
-import {
-    Users,
-    IndianRupee,
-    Building2,
-    Search,
-    Plus,
-    ArrowUpDown,
-    Pencil,
-    Trash2,
+  Upload,
+  Download,
+  Users,
+  IndianRupee,
+  Building2,
+  Search,
+  Plus,
+  ArrowUpDown,
+  Pencil,
+  Trash2,
+  FileSpreadsheet,
+  X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
-
-
-
-export default function EmployeesPage() {
-
-    const [employees, setEmployees] = useState([]);
-    const [searchTerm, setSearchTerm] = useState("");
-    const [loading, setLoading] = useState(true);
-    const [currentPage, setCurrentPage] = useState(1);
-    const employeesPerPage = 5;
-    const [sortBy, setSortBy] = useState("");
-    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-    const [employeeToDelete, setEmployeeToDelete] = useState(null);
-    const [excelFile, setExcelFile] = useState(null);
-    const [isUploading, setIsUploading] = useState(false);
-    const fileInputRef = useRef(null);
-    const [isExporting, setIsExporting] = useState(false);
-
-    // Fetch employees data from API
-    const fetchEmployees = async () => {
-        try {
-            const res = await axios.get(
-                "http://localhost:5000/employees"
-            );
-
-            setEmployees(res.data.data);
-        } catch (error) {
-            console.log(error);
-        }
-    };
-
-    // Upload Excel File
-    const handleExcelUpload = async () => {
-        if (!excelFile) {
-            toast.error("Please select an Excel file");
-            return;
-        }
-
-        try {
-
-            setIsUploading(true);
-
-            const formData = new FormData();
-
-            formData.append("file", excelFile);
-
-            const res = await axios.post(
-                "http://localhost:5000/employees/import",
-                formData,
-                {
-                    headers: {
-                        "Content-Type": "multipart/form-data",
-                    },
-                }
-            );
-
-            toast.success(
-                `${res.data.inserted} employees imported, ${res.data.skipped} skipped`
-            );
-
-            fetchEmployees();
-
-            setExcelFile(null);
-
-            if (fileInputRef.current) {
-                fileInputRef.current.value = "";
-            }
-        } catch (error) {
-            console.log(error);
-
-            toast.error(
-                error.response?.data?.message ||
-                "Failed to import employees"
-            );
-        } finally {
-            setIsUploading(false);
-        }
-    };
-
-    // Export Excel File
-    const handleExport = () => {
-    setIsExporting(true);
-
-    window.location.href =
-        "http://localhost:5000/employees/export";
-
-    setTimeout(() => {
-        setIsExporting(false);
-    }, 2000);
+// ─── Department badge colors ────────────────────────────────────────────────
+const DEPT_COLORS = {
+  IT: "bg-violet-50 text-violet-700 ring-violet-200",
+  HR: "bg-pink-50  text-pink-700  ring-pink-200",
+  Finance: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+  Marketing: "bg-orange-50 text-orange-700 ring-orange-200",
+  Sales: "bg-blue-50  text-blue-700  ring-blue-200",
+  Development: "bg-indigo-50 text-indigo-700 ring-indigo-200",
 };
 
-    // Fetch data on component mount
-    useEffect(() => {
-        const loadEmployees = async () => {
-            try {
-                const res = await axios.get(
-                    "http://localhost:5000/employees"
-                );
+function DeptBadge({ dept }) {
+  const cls = DEPT_COLORS[dept] ?? "bg-slate-50 text-slate-600 ring-slate-200";
+  return (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${cls}`}>
+      {dept}
+    </span>
+  );
+}
 
-                setEmployees(res.data.data);
-            } catch (error) {
-                console.log(error);
-            } finally {
-                setLoading(false);
-            }
-        };
+// ─── Stat Card ───────────────────────────────────────────────────────────────
+function StatCard({ icon: Icon, label, value, iconBg, iconColor }) {
+  return (
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 flex items-center gap-5">
+      <div className={`${iconBg} p-3 rounded-xl`}>
+        <Icon className={`h-6 w-6 ${iconColor}`} />
+      </div>
+      <div>
+        <p className="text-sm font-medium text-slate-500">{label}</p>
+        <p className="text-2xl font-bold text-slate-900 mt-0.5">{value}</p>
+      </div>
+    </div>
+  );
+}
 
-        loadEmployees();
-    }, []);
+// ─── Pagination Button ───────────────────────────────────────────────────────
+function PageBtn({ active, onClick, children }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`h-8 w-8 rounded-lg text-sm font-medium transition-colors ${active
+          ? "bg-indigo-600 text-white"
+          : "text-slate-600 hover:bg-slate-100"
+        }`}
+    >
+      {children}
+    </button>
+  );
+}
 
-    // Delete employee
-    const deleteEmployee = async () => {
-        if (employeeToDelete === null) return;
+// ─── Main Page ───────────────────────────────────────────────────────────────
+export default function EmployeesPage() {
+  const [employees, setEmployees] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortBy, setSortBy] = useState("");
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState(null);
+  const [excelFile, setExcelFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const fileInputRef = useRef(null);
+  const EMPLOYEES_PER_PAGE = 8;
 
-        try {
-            await axios.delete(
-                `http://localhost:5000/employees/${employeeToDelete}`
-            );
+  // ── Data fetching ──────────────────────────────────────────────────────────
+  const fetchEmployees = async () => {
+    try {
 
-            toast.success("Employee Deleted Successfully");
+      const res = await axios.get("http://192.168.1.70:5000/employees");
 
-            fetchEmployees();
+      setEmployees(res.data.data);
 
-            setIsDeleteOpen(false);
-            setEmployeeToDelete(null);
-        } catch (error) {
-            console.log(error);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
-            toast.error("Failed to Delete Employee");
-        }
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await axios.get("http://192.168.1.70:5000/employees");
+        setEmployees(res.data.data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
     };
+    load();
+  }, []);
 
-    // Search employee
-    const filteredEmployees = employees.filter((employee) =>
-        employee.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    // Calculate statistics (Dashboard)
-    const totalEmployees = employees.length;
-
-    const totalSalary = employees.reduce(
-        (sum, employee) => sum + Number(employee.salary),
-        0
-    );
-
-    const totalDepartments = new Set(
-        employees.map((employee) => employee.department)
-    ).size;
-
-
-
-    // Loading State
-    if (loading) {
-        return (
-            <div className="p-6">
-                Loading employees...
-            </div>
-        );
+  // ── Import ─────────────────────────────────────────────────────────────────
+  const handleExcelUpload = async () => {
+    if (!excelFile) {
+      toast.error("Please select an Excel file first");
+      return;
     }
-
-    // sort by name or salary
-    const sortedEmployees = [...filteredEmployees];
-
-    if (sortBy === "name") {
-        sortedEmployees.sort((a, b) =>
-            a.name.localeCompare(b.name)
-        );
+    try {
+      setIsUploading(true);
+      const formData = new FormData();
+      formData.append("file", excelFile);
+      const res = await axios.post(
+        "http://192.168.1.70:5000/employees/import",
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+      toast.success(`${res.data.inserted} imported, ${res.data.skipped} skipped`);
+      fetchEmployees();
+      setExcelFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message ?? "Failed to import employees");
+    } finally {
+      setIsUploading(false);
     }
+  };
 
-    if (sortBy === "salary") {
-        sortedEmployees.sort(
-            (a, b) => Number(b.salary) - Number(a.salary)
-        );
+  // ── Export ─────────────────────────────────────────────────────────────────
+  const handleExport = () => {
+    setIsExporting(true);
+    window.location.href = "http://192.168.1.70:5000/employees/export";
+    setTimeout(() => setIsExporting(false), 2000);
+  };
+
+  // ── Delete ─────────────────────────────────────────────────────────────────
+  const deleteEmployee = async () => {
+    if (employeeToDelete === null) return;
+    try {
+      await axios.delete(`http://192.168.1.70:5000/employees/${employeeToDelete}`);
+      toast.success("Employee deleted");
+      fetchEmployees();
+      setIsDeleteOpen(false);
+      setEmployeeToDelete(null);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete employee");
     }
+  };
 
-    // Pagination
-    const lastIndex = currentPage * employeesPerPage;
-    const firstIndex = lastIndex - employeesPerPage;
+  // ── Derived data ───────────────────────────────────────────────────────────
+  const filtered = employees.filter((e) =>
+    e.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-    const currentEmployees =
-        sortedEmployees.slice(
-            firstIndex,
-            lastIndex
-        );
+  const sorted = [...filtered];
+  if (sortBy === "name") sorted.sort((a, b) => a.name.localeCompare(b.name));
+  if (sortBy === "salary") sorted.sort((a, b) => Number(b.salary) - Number(a.salary));
 
+  const totalPages = Math.ceil(sorted.length / EMPLOYEES_PER_PAGE);
+  const lastIndex = currentPage * EMPLOYEES_PER_PAGE;
+  const firstIndex = lastIndex - EMPLOYEES_PER_PAGE;
+  const currentEmployees = sorted.slice(firstIndex, lastIndex);
 
-    // Total pages
-    const totalPages = Math.ceil(
-        filteredEmployees.length /
-        employeesPerPage
-    );
+  const totalSalary = employees.reduce((s, e) => s + Number(e.salary), 0);
+  const totalDepts = new Set(employees.map((e) => e.department)).size;
 
+  // ── Loading ────────────────────────────────────────────────────────────────
+
+  if (loading) {
     return (
-        <div className="max-w-7xl mx-auto px-6 py-8">
-            <div className="mb-10">
-                <h1 className="text-4xl font-bold tracking-tight">
-                    Employee Management System
-                </h1>
-
-                <p className="text-gray-500 mt-2">
-                    Manage employee records, departments and salaries.
-                </p>
-            </div>
-
-            {/* Dashboard Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle className="text-sm text-gray-500">
-                            Total Employees
-                        </CardTitle>
-
-                        <Users className="h-5 w-5 text-blue-500" />
-                    </CardHeader>
-
-                    <CardContent>
-                        <p className="text-4xl font-bold">
-                            {totalEmployees}
-                        </p>
-                    </CardContent>
-                </Card>
-
-                <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle className="text-sm text-gray-500">
-                            Total Salary
-                        </CardTitle>
-
-                        <IndianRupee className="h-5 w-5 text-green-500" />
-                    </CardHeader>
-
-                    <CardContent>
-                        <p className="text-4xl font-bold">
-                            ₹{totalSalary.toLocaleString()}
-                        </p>
-                    </CardContent>
-                </Card>
-
-                <Card className="hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle className="text-sm text-gray-500">
-                            Departments
-                        </CardTitle>
-
-                        <Building2 className="h-5 w-5 text-orange-500" />
-                    </CardHeader>
-
-                    <CardContent>
-                        <p className="text-4xl font-bold">
-                            {totalDepartments}
-                        </p>
-                    </CardContent>
-                </Card>
-            </div>
-            <Card>
-                <CardContent className="p-6">
-                    <div className="flex flex-col md:flex-row gap-4 justify-between items-center mb-6">
-                        <div className="relative w-full">
-                            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-
-                            <input
-                                type="text"
-                                placeholder="Search employees..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full border rounded-lg pl-10 pr-4 py-2"
-                            />
-                        </div>
-
-                        <a
-                            href="http://localhost:5000/employees/download-template"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 border px-4 py-2 rounded-lg hover:bg-gray-100 whitespace-nowrap"
-                        >
-                            <Download size={18} />
-                            Template
-                        </a>
-
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept=".xlsx,.csv"
-                            className="hidden"
-                            id="excelFile"
-                            onChange={(e) =>
-                                setExcelFile(e.target.files[0])
-                            }
-                        />
-
-                        <label
-                            htmlFor="excelFile"
-                            className="cursor-pointer border px-4 py-2 rounded-lg"
-                        >
-                            Select Excel
-                        </label>
-
-                        <button
-                            onClick={handleExcelUpload}
-                            disabled={isUploading}
-                            className="bg-green-600 text-white px-4 py-2 rounded-lg disabled:opacity-50"
-                        >
-                            <Upload size={18} />
-                            {isUploading ? "Uploading..." : "Upload Excel"}
-                        </button>
-
-                        {excelFile && (
-                            <p className="text-sm text-green-600 mt-2">
-                                Selected: {excelFile.name}
-                            </p>
-                        )}
-
-                        <Link
-                            href="/employees/add"
-                            className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg whitespace-nowrap hover:opacity-90"
-                        >
-                            <Plus size={18} />
-                            Add Employee
-                        </Link>
-
-                        <button
-                            onClick={handleExport}
-                            disabled={isExporting}
-                            className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg disabled:opacity-50"
-                        >
-                            <Download size={18} />
-                            {isExporting
-                                ? "Exporting..."
-                                : "Export Employees"}
-                        </button>
-                    </div>
-
-                    <div className="flex gap-3 mb-6">
-                        <button
-                            onClick={() => setSortBy("name")}
-                            className="flex items-center gap-2 border px-4 py-2 rounded-lg hover:bg-gray-100"
-                        >
-                            <ArrowUpDown size={16} />
-                            Sort Name
-                        </button>
-
-                        <button
-                            onClick={() => setSortBy("salary")}
-                            className="flex items-center gap-2 border px-4 py-2 rounded-lg hover:bg-gray-100"
-                        >
-                            <ArrowUpDown size={16} />
-                            Sort Salary
-                        </button>
-                    </div>
-
-                    {/* If No Employees Found then show this */}
-                    {filteredEmployees.length === 0 && (
-                        <div className="text-center py-10">
-                            No employees found
-                        </div>
-                    )}
-                    <table className="w-full border">
-                        <thead className="bg-slate-50">
-                            <tr>
-                                <th className="border p-3">#</th>
-                                <th className="border p-3">ID</th>
-                                <th className="border p-3">Name</th>
-                                <th className="border p-3">Email</th>
-                                <th className="border p-3">Phone</th>
-                                <th className="border p-3">Department</th>
-                                <th className="border p-3">Salary</th>
-                                <th className="border p-3">Actions</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            {currentEmployees.map((employee, index) => (
-                                <tr
-                                    key={employee.id}
-                                    className="hover:bg-gray-50 transition"
-                                >
-                                    <td className="border p-3">
-                                        {index + 1}
-                                    </td>
-
-                                    <td className="border p-3">
-                                        {employee.id}
-                                    </td>
-
-                                    <td className="border p-3">
-                                        {employee.name}
-                                    </td>
-
-                                    <td className="border p-3">
-                                        {employee.email}
-                                    </td>
-
-                                    <td className="border p-3">
-                                        {employee.phone}
-                                    </td>
-
-                                    <td className="border p-3">
-                                        {employee.department}
-                                    </td>
-
-                                    <td className="border p-3">
-                                        ₹{employee.salary}
-                                    </td>
-                                    {/* Add Edit button */}
-                                    <td className="border p-3">
-                                        <Link
-                                            href={`/employees/edit/${employee.id}`}
-                                            className="inline-flex items-center gap-2 border px-3 py-2 rounded-lg hover:bg-gray-100 mr-2"
-                                        >
-                                            <Pencil size={16} />
-                                            Edit
-                                        </Link>
-                                        {/* Add Delete button */}
-                                        <button
-                                            onClick={() => {
-                                                setEmployeeToDelete(employee.id);
-                                                setIsDeleteOpen(true);
-                                            }}
-                                            className="inline-flex items-center gap-2 border border-red-200 text-red-600 px-3 py-2 rounded-lg hover:bg-red-50"
-                                        >
-                                            <Trash2 size={16} />
-                                            Delete
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    <div className="flex justify-center gap-2 mt-4">
-                        {Array.from(
-                            { length: totalPages },
-                            (_, index) => (
-                                <button
-                                    key={index}
-                                    onClick={() =>
-                                        setCurrentPage(index + 1)
-                                    }
-                                    className={`px-3 py-2 border rounded ${currentPage === index + 1
-                                        ? "bg-blue-500 text-white"
-                                        : ""
-                                        }`}
-                                >
-                                    {index + 1}
-                                </button>
-                            )
-                        )}
-                    </div>
-                </CardContent>
-            </Card>
-            <AlertDialog
-                open={isDeleteOpen}
-                onOpenChange={setIsDeleteOpen}
-            >
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>
-                            Delete Employee
-                        </AlertDialogTitle>
-
-                        <AlertDialogDescription>
-                            Are you sure you want to delete this employee?
-                            This action cannot be undone.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>
-                            Cancel
-                        </AlertDialogCancel>
-
-                        <AlertDialogAction
-                            onClick={deleteEmployee}
-                        >
-                            Delete
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+      <div className="flex items-center justify-center min-h-screen bg-slate-50">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 rounded-full border-2 border-indigo-600 border-t-transparent animate-spin" />
+          <p className="text-sm text-slate-500">Loading employees…</p>
         </div>
+      </div>
     );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      {/* ── Page Header ──────────────────────────────────────────────────── */}
+      <div className="bg-white border-b border-slate-100">
+        <div className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+              Employees
+            </h1>
+            <p className="text-sm text-slate-500 mt-0.5">
+              {employees.length} total records
+            </p>
+          </div>
+          <Link
+            href="/employees/add"
+            className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-colors shadow-sm"
+          >
+            <Plus size={16} />
+            Add employee
+          </Link>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-6">
+        {/* ── Stat Cards ──────────────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <StatCard
+            icon={Users}
+            label="Total employees"
+            value={employees.length}
+            iconBg="bg-indigo-50"
+            iconColor="text-indigo-600"
+          />
+          <StatCard
+            icon={IndianRupee}
+            label="Total monthly salary"
+            value={`₹${totalSalary.toLocaleString("en-IN")}`}
+            iconBg="bg-emerald-50"
+            iconColor="text-emerald-600"
+          />
+          <StatCard
+            icon={Building2}
+            label="Departments"
+            value={totalDepts}
+            iconBg="bg-orange-50"
+            iconColor="text-orange-600"
+          />
+        </div>
+
+        {/* ── Main Table Card ──────────────────────────────────────────────── */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          {/* ── Toolbar Row 1: search + sort ──────────────────────────────── */}
+          <div className="px-6 pt-5 pb-4 border-b border-slate-100 flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+            {/* Search */}
+            <div className="relative flex-1 w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search by name…"
+                value={searchTerm}
+                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-4 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition"
+              />
+            </div>
+            {/* Sort */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setSortBy(sortBy === "name" ? "" : "name")}
+                className={`inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-xl border transition ${sortBy === "name"
+                    ? "bg-indigo-50 border-indigo-200 text-indigo-700"
+                    : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                  }`}
+              >
+                <ArrowUpDown size={14} />
+                Name
+              </button>
+              <button
+                onClick={() => setSortBy(sortBy === "salary" ? "" : "salary")}
+                className={`inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-xl border transition ${sortBy === "salary"
+                    ? "bg-indigo-50 border-indigo-200 text-indigo-700"
+                    : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                  }`}
+              >
+                <ArrowUpDown size={14} />
+                Salary
+              </button>
+            </div>
+          </div>
+
+          {/* ── Toolbar Row 2: import / export ────────────────────────────── */}
+          <div className="px-6 py-3 bg-slate-50/60 border-b border-slate-100 flex flex-wrap gap-2 items-center">
+            {/* Template download */}
+            <a
+              href="http://192.168.1.70:5000/employees/download-template"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-white transition"
+            >
+              <Download size={13} />
+              Download template
+            </a>
+
+            {/* File picker */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.csv"
+              id="excelFile"
+              className="hidden"
+              onChange={(e) => setExcelFile(e.target.files[0])}
+            />
+            <label
+              htmlFor="excelFile"
+              className="inline-flex items-center gap-1.5 cursor-pointer text-xs font-medium px-3 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-white transition"
+            >
+              <FileSpreadsheet size={13} />
+              {excelFile ? "Change file" : "Select file"}
+            </label>
+
+            {/* Chosen file chip */}
+            {excelFile && (
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100">
+                {excelFile.name}
+                <button
+                  onClick={() => { setExcelFile(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                  className="hover:opacity-70 transition"
+                  aria-label="Remove file"
+                >
+                  <X size={12} />
+                </button>
+              </span>
+            )}
+
+            {/* Upload button */}
+            <button
+              onClick={handleExcelUpload}
+              disabled={isUploading || !excelFile}
+              className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-40 disabled:cursor-not-allowed transition"
+            >
+              <Upload size={13} />
+              {isUploading ? "Uploading…" : "Upload"}
+            </button>
+
+            {/* Spacer */}
+            <div className="flex-1" />
+
+            {/* Export */}
+            <button
+              onClick={handleExport}
+              disabled={isExporting}
+              className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-white disabled:opacity-50 transition"
+            >
+              <Download size={13} />
+              {isExporting ? "Exporting…" : "Export all"}
+            </button>
+          </div>
+
+          {/* ── Table ──────────────────────────────────────────────────────── */}
+          {filtered.length === 0 ? (
+            /* Empty state */
+            <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
+              <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center mb-3">
+                <Users className="h-5 w-5 text-slate-400" />
+              </div>
+              <p className="text-sm font-medium text-slate-700">No employees found</p>
+              <p className="text-sm text-slate-400 mt-1">
+                {searchTerm
+                  ? `No results for "${searchTerm}". Try a different name.`
+                  : "Add your first employee to get started."}
+              </p>
+              {!searchTerm && (
+                <Link
+                  href="/employees/add"
+                  className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                >
+                  <Plus size={14} /> Add employee
+                </Link>
+              )}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <th className="px-5 py-3 text-left">ID</th>
+                    <th className="px-5 py-3 text-left">Name</th>
+                    <th className="px-5 py-3 text-left">Email</th>
+                    <th className="px-5 py-3 text-left">Phone</th>
+                    <th className="px-5 py-3 text-left">Department</th>
+                    <th className="px-5 py-3 text-right">Salary</th>
+                    <th className="px-5 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {currentEmployees.map((employee) => (
+                    <tr
+                      key={employee.id}
+                      className="hover:bg-slate-50/80 transition-colors"
+                    >
+                      <td className="px-5 py-3.5 text-slate-400 font-mono text-xs">
+                        #{employee.id}
+                      </td>
+                      <td className="px-5 py-3.5 font-medium text-slate-900">
+                        {employee.name}
+                      </td>
+                      <td className="px-5 py-3.5 text-slate-500">
+                        {employee.email}
+                      </td>
+                      <td className="px-5 py-3.5 text-slate-500">
+                        {employee.phone}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <DeptBadge dept={employee.department} />
+                      </td>
+                      <td className="px-5 py-3.5 text-right font-medium text-slate-800">
+                        ₹{Number(employee.salary).toLocaleString("en-IN")}
+                      </td>
+                      <td className="px-5 py-3.5 text-right">
+                        <div className="inline-flex items-center gap-1.5">
+                          <Link
+                            href={`/employees/edit/${employee.id}`}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 text-xs font-medium transition"
+                          >
+                            <Pencil size={12} />
+                            Edit
+                          </Link>
+                          <button
+                            onClick={() => {
+                              setEmployeeToDelete(employee.id);
+                              setIsDeleteOpen(true);
+                            }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-red-100 text-red-600 hover:bg-red-50 text-xs font-medium transition"
+                          >
+                            <Trash2 size={12} />
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* ── Pagination ─────────────────────────────────────────────────── */}
+          {totalPages > 1 && (
+            <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between text-sm text-slate-500">
+              <span>
+                Showing {firstIndex + 1}–{Math.min(lastIndex, sorted.length)} of {sorted.length}
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => (
+                  <PageBtn
+                    key={i}
+                    active={currentPage === i + 1}
+                    onClick={() => setCurrentPage(i + 1)}
+                  >
+                    {i + 1}
+                  </PageBtn>
+                ))}
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Delete Dialog ────────────────────────────────────────────────── */}
+      <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete employee?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove the employee record. This action
+              cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={deleteEmployee}
+              className="rounded-xl bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
 }

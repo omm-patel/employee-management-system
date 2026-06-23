@@ -5,6 +5,7 @@ import axios from "axios";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Pencil, Save } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,6 +25,8 @@ export default function EditEmployee() {
 
   const { id } = params;
 
+  const [loading, setLoading] = useState(true);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -36,13 +39,15 @@ export default function EditEmployee() {
     const fetchEmployee = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:5000/employees/${id}`
+          `http://192.168.1.70:5000/employees/${id}`
         );
 
         setFormData(res.data.data[0]);
       } catch (error) {
         console.log(error);
         toast.error("Failed to Load Employee");
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -63,7 +68,7 @@ export default function EditEmployee() {
 
     try {
       await axios.put(
-        `http://localhost:5000/employees/${id}`,
+        `http://192.168.1.70:5000/employees/${id}`,
         formData
       );
 
@@ -76,138 +81,190 @@ export default function EditEmployee() {
     }
   };
 
-  return (
-    <div className="max-w-4xl mx-auto px-6 py-8">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold">
-          Edit Employee
-        </h1>
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <div className="max-w-5xl mx-auto px-6 py-8">
+          <Card className="bg-white rounded-2xl border border-slate-100 shadow-sm">
+            <CardContent className="p-8">
+              <div className="space-y-4 animate-pulse">
+                <div className="h-8 w-56 bg-slate-200 rounded" />
+                <div className="h-11 bg-slate-200 rounded" />
+                <div className="h-11 bg-slate-200 rounded" />
+                <div className="h-11 bg-slate-200 rounded" />
+                <div className="h-11 bg-slate-200 rounded" />
+                <div className="h-11 bg-slate-200 rounded" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
-        <p className="text-muted-foreground mt-2">
-          Update employee information.
-        </p>
+  return (
+    <div className="min-h-screen bg-slate-50">
+      {/* Header */}
+      <div className="bg-white border-b border-slate-100">
+        <div className="max-w-5xl mx-auto px-6 py-6">
+          <div className="inline-flex items-center gap-2 rounded-full bg-indigo-50 text-indigo-700 px-3 py-1 text-sm font-medium mb-4">
+            <Pencil size={14} />
+            Employee Management
+          </div>
+
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+            Edit Employee
+          </h1>
+
+          <p className="text-slate-500 mt-2">
+            Update employee information and keep records accurate.
+          </p>
+        </div>
       </div>
 
-      <Card>
-        <CardContent className="p-6">
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-6"
-          >
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label>Name</Label>
+      {/* Form */}
+      <div className="max-w-5xl mx-auto px-6 py-8">
+        <Card className="bg-white rounded-2xl border border-slate-100 shadow-sm">
+          <CardContent className="p-8">
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-8"
+            >
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">
+                  Employee Information
+                </h2>
 
-                <Input
-                  type="text"
-                  name="name"
-                  placeholder="Enter employee name"
-                  value={formData.name || ""}
-                  onChange={handleChange}
-                  required
-                />
+                <p className="text-sm text-slate-500 mt-1">
+                  Modify employee details and save your changes.
+                </p>
               </div>
 
-              <div className="space-y-2">
-                <Label>Email</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Name */}
+                <div className="space-y-2">
+                  <Label className="text-slate-700">
+                    Full Name
+                  </Label>
 
-                <Input
-                  type="email"
-                  name="email"
-                  placeholder="Enter employee email"
-                  value={formData.email || ""}
-                  onChange={handleChange}
-                  required
-                />
+                  <Input
+                    type="text"
+                    name="name"
+                    placeholder="Enter employee name"
+                    value={formData.name || ""}
+                    onChange={handleChange}
+                    required
+                    className="h-11"
+                  />
+                </div>
+
+                {/* Email */}
+                <div className="space-y-2">
+                  <Label className="text-slate-700">
+                    Email Address
+                  </Label>
+
+                  <Input
+                    type="email"
+                    name="email"
+                    placeholder="Enter employee email"
+                    value={formData.email || ""}
+                    onChange={handleChange}
+                    required
+                    className="h-11"
+                  />
+                </div>
+
+                {/* Phone */}
+                <div className="space-y-2">
+                  <Label className="text-slate-700">
+                    Phone Number
+                  </Label>
+
+                  <Input
+                    type="text"
+                    name="phone"
+                    placeholder="Enter phone number"
+                    value={formData.phone || ""}
+                    onChange={handleChange}
+                    className="h-11"
+                  />
+                </div>
+
+                {/* Department */}
+                <div className="space-y-2">
+                  <Label className="text-slate-700">
+                    Department
+                  </Label>
+
+                  <Select
+                    value={formData.department || ""}
+                    onValueChange={(value) =>
+                      setFormData({
+                        ...formData,
+                        department: value,
+                      })
+                    }
+                  >
+                    <SelectTrigger className="h-11">
+                      <SelectValue placeholder="Select Department" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      <SelectItem value="IT">IT</SelectItem>
+                      <SelectItem value="HR">HR</SelectItem>
+                      <SelectItem value="Finance">
+                        Finance
+                      </SelectItem>
+                      <SelectItem value="Marketing">
+                        Marketing
+                      </SelectItem>
+                      <SelectItem value="Sales">Sales</SelectItem>
+                      <SelectItem value="Development">
+                        Development
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Salary */}
+                <div className="space-y-2 md:col-span-2">
+                  <Label className="text-slate-700">
+                    Salary
+                  </Label>
+
+                  <Input
+                    type="number"
+                    name="salary"
+                    placeholder="Enter salary amount"
+                    value={formData.salary || ""}
+                    onChange={handleChange}
+                    className="h-11"
+                  />
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>Phone</Label>
-
-                <Input
-                  type="text"
-                  name="phone"
-                  placeholder="Enter phone number"
-                  value={formData.phone || ""}
-                  onChange={handleChange}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Department</Label>
-
-                <Select
-                  value={formData.department || ""}
-                  onValueChange={(value) =>
-                    setFormData({
-                      ...formData,
-                      department: value,
-                    })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Department" />
-                  </SelectTrigger>
-
-                  <SelectContent>
-                    <SelectItem value="IT">
-                      IT
-                    </SelectItem>
-
-                    <SelectItem value="HR">
-                      HR
-                    </SelectItem>
-
-                    <SelectItem value="Finance">
-                      Finance
-                    </SelectItem>
-
-                    <SelectItem value="Marketing">
-                      Marketing
-                    </SelectItem>
-
-                    <SelectItem value="Sales">
-                      Sales
-                    </SelectItem>
-
-                    <SelectItem value="Development">
-                      Development
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Salary</Label>
-
-                <Input
-                  type="number"
-                  name="salary"
-                  placeholder="Enter salary"
-                  value={formData.salary || ""}
-                  onChange={handleChange}
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4">
+              {/* Buttons */}
+              <div className="border-t border-slate-100 pt-6 flex flex-col sm:flex-row justify-end gap-3">
                 <Link
                   href="/employees"
-                  className="border px-4 py-2 rounded-lg"
+                  className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition"
                 >
                   Cancel
                 </Link>
 
                 <button
                   type="submit"
-                  className="bg-black text-white px-5 py-2 rounded-lg"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 px-5 py-2.5 text-sm font-medium text-white transition"
                 >
+                  <Save size={16} />
                   Update Employee
                 </button>
               </div>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

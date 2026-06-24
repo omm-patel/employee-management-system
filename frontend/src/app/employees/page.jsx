@@ -100,7 +100,7 @@ export default function EmployeesPage() {
   const fetchEmployees = async () => {
     try {
 
-      const res = await axios.get("http://192.168.1.70:5000/employees");
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/employees`);
 
       setEmployees(res.data.data);
 
@@ -112,7 +112,7 @@ export default function EmployeesPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await axios.get("http://192.168.1.70:5000/employees");
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/employees`);
         setEmployees(res.data.data);
       } catch (err) {
         console.error(err);
@@ -134,7 +134,7 @@ export default function EmployeesPage() {
       const formData = new FormData();
       formData.append("file", excelFile);
       const res = await axios.post(
-        "http://192.168.1.70:5000/employees/import",
+        `${process.env.NEXT_PUBLIC_API_URL}/employees`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
@@ -153,7 +153,7 @@ export default function EmployeesPage() {
   // ── Export ─────────────────────────────────────────────────────────────────
   const handleExport = () => {
     setIsExporting(true);
-    window.location.href = "http://192.168.1.70:5000/employees/export";
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/employees`;
     setTimeout(() => setIsExporting(false), 2000);
   };
 
@@ -161,7 +161,7 @@ export default function EmployeesPage() {
   const deleteEmployee = async () => {
     if (employeeToDelete === null) return;
     try {
-      await axios.delete(`http://192.168.1.70:5000/employees/${employeeToDelete}`);
+      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/employees/${employeeToDelete}`);
       toast.success("Employee deleted");
       fetchEmployees();
       setIsDeleteOpen(false);
@@ -295,7 +295,7 @@ export default function EmployeesPage() {
           <div className="px-6 py-3 bg-slate-50/60 border-b border-slate-100 flex flex-wrap gap-2 items-center">
             {/* Template download */}
             <a
-              href="http://192.168.1.70:5000/employees/download-template"
+              href={`${process.env.NEXT_PUBLIC_API_URL}/employees/download-template`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-white transition"

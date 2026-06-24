@@ -39,7 +39,7 @@ export default function AddEmployee() {
 
     try {
       await axios.post(
-        "http://192.168.1.70:5000/employees",
+        `${process.env.NEXT_PUBLIC_API_URL}/employees`,
         formData
       );
 

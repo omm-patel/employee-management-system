@@ -39,7 +39,7 @@ export default function EditEmployee() {
     const fetchEmployee = async () => {
       try {
         const res = await axios.get(
-          `http://192.168.1.70:5000/employees/${id}`
+          `${process.env.NEXT_PUBLIC_API_URL}/employees/${id}`
         );
 
         setFormData(res.data.data[0]);
@@ -68,7 +68,7 @@ export default function EditEmployee() {
 
     try {
       await axios.put(
-        `http://192.168.1.70:5000/employees/${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/employees/${id}`,
         formData
       );
 
